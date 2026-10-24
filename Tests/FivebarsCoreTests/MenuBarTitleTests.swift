@@ -29,12 +29,78 @@ import Testing
 
     @Test func appendsTheLossWhenGiven() {
         #expect(MenuBarTitle.title(pingMs: 48, lossPercent: 4.4) == "48ms (4%)")
-        #expect(MenuBarTitle.title(pingMs: 1234, lossPercent: 100) == "1.2s (100%)")
+        #expect(MenuBarTitle.title(pingMs: 1234, lossPercent: 100) == "1.2s (99%)")
+        #expect(MenuBarTitle.title(pingMs: 48, lossPercent: 99.6) == "48ms (99%)")
         #expect(MenuBarTitle.title(pingMs: 48, lossPercent: nil) == "48ms")
     }
 
-    @Test func widestCandidatesIncludeTheLongestLossSuffix() {
-        #expect(MenuBarTitle.widestCandidates(showsLoss: true).contains("8.8s (100%)"))
-        #expect(!MenuBarTitle.widestCandidates(showsLoss: false).contains { $0.contains("%") })
+    @Test func widestCandidatesMakeRoomForTheRequestedLossDigits() {
+        #expect(MenuBarTitle.widestCandidates(lossDigits: 1).contains("8.8s (8%)"))
+        #expect(MenuBarTitle.widestCandidates(lossDigits: 2).contains("8.8s (88%)"))
+        #expect(!MenuBarTitle.widestCandidates(lossDigits: 2).contains { $0.contains("100") })
+        #expect(!MenuBarTitle.widestCandidates(lossDigits: nil).contains { $0.contains("%") })
+    }
+
+    @Test func lossModeDecidesTheSuffix() {
+        #expect(!MenuBarTitle.showsLoss(mode: .off, gateOpen: true))
+        #expect(MenuBarTitle.showsLoss(mode: .always, gateOpen: false))
+        #expect(MenuBarTitle.showsLoss(mode: .whenLossy, gateOpen: true))
+        #expect(!MenuBarTitle.showsLoss(mode: .whenLossy, gateOpen: false))
+    }
+
+    @Test func gateStaysClosedWithoutLoss() {
+        var gate = MenuBarTitle.HoldGate.lossSuffix()
+        var open: Bool
+        open = gate.update(active: false, now: 0)
+        #expect(!open)
+        open = gate.update(active: false, now: 1)
+        #expect(!open)
+    }
+
+    @Test func gateOpensOnLossAndHoldsTenSecondsAfterRecovery() {
+        var gate = MenuBarTitle.HoldGate.lossSuffix()
+        var open: Bool
+        open = gate.update(active: true, now: 100)
+        #expect(open)
+        open = gate.update(active: true, now: 105)
+        #expect(open)
+        open = gate.update(active: false, now: 106)
+        #expect(open)
+        open = gate.update(active: false, now: 114.9)
+        #expect(open)
+        open = gate.update(active: false, now: 115)
+        #expect(!open)
+        open = gate.update(active: false, now: 130)
+        #expect(!open)
+    }
+
+    @Test func newLossDuringTheHoldRestartsIt() {
+        var gate = MenuBarTitle.HoldGate.lossSuffix()
+        var open: Bool
+        open = gate.update(active: true, now: 0)
+        #expect(open)
+        open = gate.update(active: false, now: 8)
+        #expect(open)
+        open = gate.update(active: true, now: 9)
+        #expect(open)
+        open = gate.update(active: false, now: 18)
+        #expect(open)
+        open = gate.update(active: false, now: 19)
+        #expect(!open)
+    }
+
+    @Test func twoDigitGateHoldsThirtySeconds() {
+        var gate = MenuBarTitle.HoldGate.twoDigitLoss()
+        var open: Bool
+        open = gate.update(active: MenuBarTitle.displayedLoss(12) >= 10, now: 0)
+        #expect(open)
+        open = gate.update(active: MenuBarTitle.displayedLoss(9.4) >= 10, now: 29.9)
+        #expect(open)
+        open = gate.update(active: false, now: 30)
+        #expect(!open)
+    }
+
+    @Test func lossModeRawValuesAreStable() {
+        #expect(MenuBarTitle.LossMode.allCases.map(\.rawValue) == ["off", "whenLossy", "always"])
     }
 }
