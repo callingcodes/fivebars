@@ -114,8 +114,6 @@ h1 { font: 800 clamp(3.4rem, 8.6vw, 6rem)/0.92 var(--display); text-transform: u
 .btn.primary { background: var(--ink); color: var(--paper); }
 .btn.primary:hover { background: var(--signal); border-color: var(--signal); color: var(--signal-ink); }
 .btn.primary:active { transform: translateY(1px); }
-.btn.ghost { color: var(--ink-2); border-color: var(--rule); border-style: dashed; cursor: not-allowed; }
-.btn.ghost em { font-style: normal; font-family: var(--mono); font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--signal); }
 
 .specs { display: flex; flex-wrap: wrap; gap: 8px 20px; list-style: none; margin: 0; padding: 0; font-size: 0.9rem; color: var(--ink-2); }
 .specs li { display: inline-flex; align-items: center; gap: 8px; }
