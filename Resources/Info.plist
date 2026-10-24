@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Fivebars</string>
+	<key>CFBundleExecutable</key>
+	<string>Fivebars</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.callingcodes.fivebars</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Fivebars</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<!-- Both versions are set by scripts/build-app.sh from the VERSION file (the single source). -->
+	<key>CFBundleShortVersionString</key>
+	<string>0</string>
+	<key>CFBundleVersion</key>
+	<string>0</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2026 Calling Codes</string>
+	<!-- Sparkle: daily automatic checks, install only when the user agrees, no system profile. -->
+	<key>SUFeedURL</key>
+	<string>https://callingcodes.com/fivebars/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>HMon9ofezgMHfnc8RVffCPGjZATK8pmxVUkZSTKh79A=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUEnableSystemProfiling</key>
+	<false/>
+	<key>SUEnableInstallerLauncherService</key>
+	<false/>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
+</dict>
+</plist>
