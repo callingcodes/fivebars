@@ -3,14 +3,23 @@ import FivebarsCore
 import Observation
 import SwiftUI
 
-/// The menu bar item: left click opens the stats popover, right click shows a small menu.
+/// The menu bar item. Left and right click open the same native menu: a live SwiftUI header
+/// (quality, latency chart, stats) above standard rows. AppKit owns opening, closing (outside clicks,
+/// other menu bar items, Esc) and the system menu material.
 @MainActor
-final class StatusItemController: NSObject, NSPopoverDelegate {
+final class StatusItemController: NSObject, NSMenuDelegate {
     private let monitor: Monitor
     private let updater: Updater
     private let openSettings: () -> Void
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-    private let popover = NSPopover()
+    private let menu = NSMenu()
+    private let headerItem = NSMenuItem()
+    private let changeHostItem = NSMenuItem()
+    private var isMenuOpen = false
+    /// Loss digits the title last made room for. While the menu is open the title keeps this
+    /// width: resizing a status item closes its open menu, which happened in "When There's Loss"
+    /// mode when the suffix came or went.
+    private var appliedLossDigits: Int?
 
     /// Last values written to the button, so an unchanged second costs no redraw.
     private var appliedImage: NSImage?
@@ -20,6 +29,12 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     /// Width reserved for the text: the widest title the current display settings can produce,
     /// measured once per settings change, so the neighbouring menu bar icons never shift.
     private var textSlot: (key: String, width: CGFloat)?
+    /// "When There's Loss" mode: shows the loss suffix while packets are lost, plus a hold.
+    private var lossGate = MenuBarTitle.HoldGate.lossSuffix()
+    /// Whether the reserved width has room for a two-digit loss.
+    private var twoDigitGate = MenuBarTitle.HoldGate.twoDigitLoss()
+    /// Redraws while a gate is holding, in case no ping lands in between (slow intervals).
+    private var lossGateRecheck: DispatchWorkItem?
 
     init(monitor: Monitor, updater: Updater, openSettings: @escaping () -> Void) {
         self.monitor = monitor
@@ -27,16 +42,13 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         self.openSettings = openSettings
         super.init()
 
-        popover.behavior = .transient
-        popover.delegate = self
-
         if let button = item.button {
-            button.target = self
-            button.action = #selector(clicked(_:))
-            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
             button.setAccessibilityLabel("Fivebars")
             button.imagePosition = .imageOnly
         }
+        buildMenu()
+        // A status item with a menu opens it on left click, right click and Control-click alike.
+        item.menu = menu
         MainMenu.install(
             target: self,
             settings: #selector(settingsSelected),
@@ -44,6 +56,91 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
             updates: #selector(checkForUpdatesSelected)
         )
         render()
+    }
+
+    private func buildMenu() {
+        menu.delegate = self
+        menu.autoenablesItems = true
+        menu.addItem(headerItem)
+
+        changeHostItem.title = "Change Host…"
+        changeHostItem.action = #selector(settingsSelected)
+        changeHostItem.target = self
+        changeHostItem.image = symbol("network")
+        changeHostItem.isHidden = true
+        menu.addItem(changeHostItem)
+
+        menu.addItem(.separator())
+        addRow("Reset Session Stats", symbol: "arrow.counterclockwise", action: #selector(resetSessionSelected))
+        // Holding Option swaps in the all-time reset, as in the old panel's Reset menu.
+        let resetAll = addRow(
+            "Reset All Time Stats…",
+            symbol: "arrow.counterclockwise",
+            action: #selector(resetAllTimeSelected)
+        )
+        resetAll.isAlternate = true
+        resetAll.keyEquivalentModifierMask = .option
+        menu.addItem(.separator())
+        if Updater.isAvailable {
+            addRow("Check for Updates…", symbol: "arrow.triangle.2.circlepath", action: #selector(checkForUpdatesSelected))
+        }
+        addRow("Settings…", symbol: "gearshape", action: #selector(settingsSelected), key: ",")
+        addRow("About Fivebars", symbol: "info.circle", action: #selector(aboutSelected))
+        menu.addItem(.separator())
+        let quit = addRow("Quit Fivebars", symbol: "power", action: #selector(NSApplication.terminate(_:)), key: "q")
+        quit.target = NSApp
+    }
+
+    @discardableResult
+    private func addRow(_ title: String, symbol name: String, action: Selector, key: String = "") -> NSMenuItem {
+        let row = menu.addItem(withTitle: title, action: action, keyEquivalent: key)
+        row.target = self
+        row.image = symbol(name)
+        return row
+    }
+
+    private func symbol(_ name: String) -> NSImage? {
+        NSImage(systemSymbolName: name, accessibilityDescription: nil)
+    }
+
+    // MARK: Menu lifecycle
+
+    /// The SwiftUI header only exists while the menu is open; a hidden hosting view would keep
+    /// re-rendering the chart every second. While open, the menu tracks events in
+    /// `.eventTracking` mode: the monitor's timers run in `.common` modes and the ICMP socket
+    /// source is on the main queue, so pings land and the header redraws live.
+    nonisolated func menuWillOpen(_ menu: NSMenu) {
+        MainActor.assumeIsolated {
+            isMenuOpen = true
+            let hosting = NSHostingView(rootView: StatusMenuView(monitor: monitor))
+            hosting.frame.size = hosting.fittingSize
+            headerItem.view = hosting
+            trackMenuState()
+        }
+    }
+
+    nonisolated func menuDidClose(_ menu: NSMenu) {
+        MainActor.assumeIsolated {
+            isMenuOpen = false
+            headerItem.view = nil
+            // Catch up on a loss suffix that came or went while the width was held.
+            update()
+        }
+    }
+
+    /// Shows "Change Host…" while the connection is down, for as long as the menu stays open.
+    /// The header reserves two lines for the down reason, so it keeps one height in both states
+    /// and the open menu never has to relayout its custom view.
+    private func trackMenuState() {
+        guard isMenuOpen else { return }
+        let hidden = withObservationTracking {
+            monitor.status != .down
+        } onChange: { [weak self] in
+            Task { @MainActor in self?.trackMenuState() }
+        }
+        if changeHostItem.isHidden != hidden {
+            changeHostItem.isHidden = hidden
+        }
     }
 
     /// Redraws the item now and again whenever anything it reads changes.
@@ -68,9 +165,14 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         // The icon and the text are drawn into one image so the item keeps the system's own padding,
         // the same as in icon-only mode, and the gap between them is explicit.
         if display.showsText {
-            let title = monitor.menuTitle
+            let gatedDigits = updateLossGates()
+            let lossDigits = isMenuOpen ? appliedLossDigits : gatedDigits
+            appliedLossDigits = lossDigits
+            let title = monitor.menuTitle(showsLoss: lossDigits != nil)
             let textWidth = MenuBarContent.textWidth(title)
-            let slot = max(textWidth, reservedTextWidth(showsLoss: monitor.prefs.showPacketLossText))
+            // The slot widens only while the suffix is shown, so in "When There's Loss" mode the
+            // neighbouring icons move when it appears and when it goes, never on each ping.
+            let slot = max(textWidth, reservedTextWidth(lossDigits: lossDigits))
             let key = "\(icon.map { ObjectIdentifier($0).hashValue } ?? 0)|\(title)|\(slot)"
             if key != appliedContentKey {
                 let image = MenuBarContent.image(icon: icon, title: title, textSlot: slot)
@@ -101,83 +203,60 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         }
     }
 
-    private func reservedTextWidth(showsLoss: Bool) -> CGFloat {
-        let key = "\(showsLoss)"
+    /// nil when the title has no loss suffix, else how many loss digits to make room for: one
+    /// normally, two only during heavy loss, so the slack is at most one digit wide.
+    private func updateLossGates() -> Int? {
+        let loss = monitor.lossIsKnown ? monitor.lossPercent : 0
+        let shown = MenuBarTitle.displayedLoss(loss)
+        let now = ProcessInfo.processInfo.systemUptime
+        let suffixOpen = lossGate.update(active: loss > 0, now: now)
+        let twoDigits = twoDigitGate.update(active: shown >= 10, now: now)
+
+        // A gate holding open closes on a later redraw; pings usually bring one, slow intervals may not.
+        lossGateRecheck?.cancel()
+        lossGateRecheck = nil
+        if (suffixOpen && loss <= 0) || (twoDigits && shown < 10) {
+            let work = DispatchWorkItem { [weak self] in
+                MainActor.assumeIsolated { self?.update() }
+            }
+            lossGateRecheck = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: work)
+        }
+
+        guard MenuBarTitle.showsLoss(mode: monitor.prefs.lossTextMode, gateOpen: suffixOpen) else { return nil }
+        return twoDigits ? 2 : 1
+    }
+
+    private func reservedTextWidth(lossDigits: Int?) -> CGFloat {
+        let key = "\(lossDigits ?? 0)"
         if let textSlot, textSlot.key == key {
             return textSlot.width
         }
-        let width = MenuBarTitle.widestCandidates(showsLoss: showsLoss).map(MenuBarContent.textWidth).max() ?? 0
+        let width = MenuBarTitle.widestCandidates(lossDigits: lossDigits).map(MenuBarContent.textWidth).max() ?? 0
         textSlot = (key, width)
         return width
-    }
-
-    @objc private func clicked(_ sender: NSStatusBarButton) {
-        if NSApp.currentEvent?.type == .rightMouseUp {
-            showMenu()
-        } else if popover.isShown {
-            popover.performClose(sender)
-        } else {
-            showPopover(from: sender)
-        }
-    }
-
-    /// The SwiftUI content only exists while the popover is open; a hidden hosting view would keep
-    /// re-rendering the chart every second.
-    private func showPopover(from button: NSStatusBarButton) {
-        let panel = PanelView(monitor: monitor) { [weak self] in
-            self?.popover.performClose(nil)
-            self?.openSettings()
-        }
-        let hosting = NSHostingController(rootView: panel)
-        hosting.sizingOptions = .preferredContentSize
-        popover.contentViewController = hosting
-        NSApp.activate()
-        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-    }
-
-    nonisolated func popoverDidClose(_ notification: Notification) {
-        MainActor.assumeIsolated {
-            popover.contentViewController = nil
-        }
-    }
-
-    private func showMenu() {
-        let menu = NSMenu()
-        let status = NSMenuItem(title: monitor.menuStatusLine, action: nil, keyEquivalent: "")
-        status.isEnabled = false
-        menu.addItem(status)
-        menu.addItem(.separator())
-        menu.addItem(withTitle: "Reset Session Stats", action: #selector(resetSessionSelected), keyEquivalent: "")
-            .target = self
-        menu.addItem(.separator())
-        menu.addItem(withTitle: "Settings…", action: #selector(settingsSelected), keyEquivalent: ",").target = self
-        menu.addItem(withTitle: "About Fivebars", action: #selector(aboutSelected), keyEquivalent: "").target = self
-        if Updater.isAvailable {
-            let updates = menu.addItem(
-                withTitle: "Check for Updates…",
-                action: #selector(checkForUpdatesSelected),
-                keyEquivalent: ""
-            )
-            updates.target = self
-        }
-        menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Fivebars", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        item.menu = menu
-        item.button?.performClick(nil)
-        item.menu = nil
     }
 
     @objc private func resetSessionSelected() {
         monitor.resetSessionStats()
     }
 
+    @objc private func resetAllTimeSelected() {
+        NSApp.activate()
+        let alert = NSAlert()
+        alert.messageText = "Are you sure you want to reset the all time stats for \(monitor.prefs.hostname)?"
+        alert.addButton(withTitle: "Reset")
+        alert.addButton(withTitle: "Cancel")
+        if alert.runModal() == .alertFirstButtonReturn {
+            monitor.resetAllTimeStats()
+        }
+    }
+
     @objc func settingsSelected() {
-        popover.performClose(nil)
         openSettings()
     }
 
     @objc func checkForUpdatesSelected() {
-        popover.performClose(nil)
         updater.checkForUpdates(nil)
     }
 

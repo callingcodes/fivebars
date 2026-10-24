@@ -98,7 +98,7 @@ extension Monitor {
         case .noNetwork:
             return "No network connection"
         case .noReplies:
-            return "No replies for \(Int(prefs.pingTimeout + 4 * Self.pingInterval)) s"
+            return "No replies for \(Int(replyTimeout)) s"
         case .socketError:
             return "Can’t open a ping socket"
         }
@@ -119,12 +119,4 @@ extension Monitor {
         return "\(qualityTitle), \(Int(latestPingMs.rounded())) milliseconds\(loss)"
     }
 
-    /// The disabled first line of the right-click menu.
-    var menuStatusLine: String {
-        if status == .down {
-            return "Connection down"
-        }
-        guard let latestPingMs, !isConnecting else { return "Connecting…" }
-        return "\(Format.wholeMs(latestPingMs)) · \(qualityTitle)"
-    }
 }
