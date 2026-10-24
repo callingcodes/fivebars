@@ -1,11 +1,11 @@
 # Fivebars
 
 Fivebars puts your internet connection in the Mac menu bar: five signal bars and your latest
-ping time, updated every second. All five bars means fast and steady; fewer means slow or lost
+ping time, updated every second by default. All five bars means fast and steady; fewer means slow or lost
 pings. A native Swift app for Apple silicon Macs running macOS 14 or later. No account, no
 tracking: it pings one host you choose and checks for updates once a day.
 
-<p align="center"><img src="site/assets/popover.webp" width="420" alt="The Fivebars panel under the menu bar item: quality word, host, a five-minute latency chart and statistics"></p>
+<p align="center"><img src="site/assets/popover.webp" width="420" alt="The Fivebars menu under the menu bar item: quality word, host, a five-minute latency chart and statistics"></p>
 
 - **Download**: <https://callingcodes.com/fivebars/download/latest> (notarized DMG; the app
   then updates itself through Sparkle)
@@ -22,12 +22,13 @@ tracking: it pings one host you choose and checks for updates once a day.
   connection is down. The item keeps one fixed width for the current display settings, so
   the icons next to it never shift.
 - Tooltip: latest ping time and recent packet loss.
-- Left click opens a popover: quality word (Excellent / Good / Fair / Poor / Very poor), host and
-  resolved address, a 5-minute latency chart (lost pings marked in red, dashed line at the slow
-  ping threshold), and Session vs All Time statistics (pings sent, replies lost, packet loss,
-  average / fastest / slowest), with reset actions.
-- Right click opens a small menu: the current status, Reset Session Stats, Settings, About,
-  Check for Updates…, Quit.
+- Click the item (left or right click) to open its menu, on the system menu material: quality word
+  (Excellent / Good / Fair / Poor / Very poor), host and resolved address, a live 5-minute latency
+  chart (one bar per few seconds, orange when slow, red when a ping was lost or very slow), and
+  Session vs All Time statistics (pings sent, replies lost, packet loss, average / fastest /
+  slowest). Below them: Change Host… (when the connection is down), Reset Session Stats (hold
+  Option for Reset All Time Stats…), Check for Updates…, Settings… (⌘,), About Fivebars and
+  Quit Fivebars (⌘Q).
 - Software updates through Sparkle 2: a daily check, and you are asked before anything is
   installed (automatic installs can be turned on in Settings).
 - Optional "Connection down" / "Connection restored" notifications.
@@ -38,7 +39,10 @@ tracking: it pings one host you choose and checks for updates once a day.
 
 ## How quality is measured
 
-- One ICMP echo per second to the configured host. Pings from the last 30 s form the window.
+- One ICMP echo per second (by default; see Ping Every in Settings) to the configured host. Pings from the
+  last 30 s form the window; at slower intervals the window is max(30 s, 10 pings x interval), so it
+  always holds at least 10 pings, and the 1.2x recency weighting stays per ping. Failed comes after
+  timeout + max(2, min(4, 60 s worth of)) missed pings: 8 s at 1 s, 24 s at 5 s, 124 s at 60 s.
 - Each ping gets a score:
   - round-trip time at or below the **slow ping threshold** (default 100 ms): 1;
   - between the threshold and threshold + 900 ms: falls linearly from 1 to 0, and keeps
@@ -89,7 +93,8 @@ to maintain. `VERSION=0.9.0 scripts/build-app.sh` builds another version without
 
 ## Settings
 
-Settings window: host to ping (applied on Return or when the field loses focus), slow ping
+Settings window: host to ping (applied on Return or when the field loses focus), ping every
+(1 to 60 s in whole seconds, field plus stepper, default 1 s, applied at once; slower means less traffic and battery), slow ping
 threshold (50 to 2000 ms, step 10), display (Icon and Text / Icon Only / Text Only), packet loss
 text, connection alerts, launch at login, check for updates automatically, install updates
 automatically, Last Checked with Check Now, Restore Default Settings.
@@ -143,7 +148,7 @@ Releases are notarized, signed for Sparkle and served from callingcodes.com by
 - Restarts pinging on network path changes and after wake, instead of waiting for the watchdog.
 - Bars are drawn as template images, so they match light/dark menu bars and any scale.
 - Launch at login uses `SMAppService` and works from any location.
-- Shows DNS / socket errors in the popover and settings.
+- Shows DNS / socket errors in the menu and settings.
 
 ## Project layout
 
@@ -165,7 +170,7 @@ Sources/Fivebars/                 the app
   Preferences.swift               UserDefaults-backed settings
   Presentation.swift              shared wording and colours for the UI
   StatusItemController.swift      menu bar item, icon drawing, context menu
-  PanelView.swift                 popover (chart, stats)
+  StatusMenuView.swift            menu header (chart, stats)
   SettingsView.swift              settings window
 Tests/FivebarsCoreTests/          Swift Testing tests
   FivebarsCoreTests.swift         scoring, stats, ICMP packets, ledger, address selection

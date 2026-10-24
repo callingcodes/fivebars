@@ -1,18 +1,10 @@
 <!doctype html>
-<!--
-  PRODUCT NAME: one token.
-  The name lives in data-product-name on <html> below. assets/site.js copies it into every
-  element marked data-product, into <title>, into meta[name=description] (from its
-  data-template, where {name} is replaced) and into aria-labels marked data-product-aria.
-  The literal text in the markup is only the no-JS fallback; to rename everywhere, also run:
-    sed -i '' 's/Fivebars/NewName/g' site/index.html
--->
-<html lang="en" data-product-name="Fivebars">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title data-template="{name}: Mac menu bar ping and network monitor">Fivebars: Mac menu bar ping and network monitor</title>
-<meta name="description" content="Fivebars is a macOS menu bar network monitor. It pings once a second and shows your connection as five signal bars and your latest ping time." data-template="{name} is a macOS menu bar network monitor. It pings once a second and shows your connection as five signal bars and your latest ping time.">
+<title>Fivebars: Mac menu bar ping and network monitor</title>
+<meta name="description" content="Fivebars is a macOS menu bar network monitor. It pings once a second and shows your connection as five signal bars and your latest ping time.">
 <meta name="color-scheme" content="light dark">
 <link rel="canonical" href="https://callingcodes.com/fivebars/">
 <meta property="og:type" content="website">
@@ -67,9 +59,9 @@
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="top wrap">
-  <a class="wordmark" href="#top" aria-label="Fivebars, home" data-product-aria="{name}, home">
+  <a class="wordmark" href="#top" aria-label="Fivebars, home">
     <img class="mark" src="assets/icon-64.png" srcset="assets/icon-64.png 1x, assets/icon-128.png 2x" width="36" height="36" alt="">
-    <span data-product>Fivebars</span>
+    Fivebars
   </a>
   <nav class="nav" aria-label="Primary">
     <a href="#bars">The bars</a>
@@ -86,7 +78,7 @@
   <div class="hero-copy">
     <img class="app-icon" src="assets/icon-128.png" srcset="assets/icon-128.png 1x, assets/icon-256.png 2x" width="112" height="112" alt="Fivebars app icon">
     <h1>One glance.<br>Five bars.</h1>
-    <p class="lede"><span data-product>Fivebars</span> puts your internet connection in the Mac menu bar: five signal bars and your latest ping time, updated every second. All five bars means fast and steady. Fewer means slow or lost pings.</p>
+    <p class="lede">Fivebars puts your internet connection in the Mac menu bar: five signal bars and your latest ping time, updated every second. All five bars means fast and steady. Fewer means slow or lost pings.</p>
     <p class="lineage">A&nbsp;native Mac app, about 4&nbsp;MB to download. No&nbsp;account, no&nbsp;tracking. It pings one host you choose and checks for&nbsp;updates once a&nbsp;day.</p>
     <div class="ctas">
       <a class="btn primary" href="https://callingcodes.com/fivebars/download/latest">Download</a>
@@ -98,16 +90,16 @@
     </ul>
   </div>
 
-  <figure class="stage" aria-label="Fivebars in the menu bar with its panel open" data-product-aria="{name} in the menu bar with its panel open">
+  <figure class="stage" aria-label="Fivebars in the menu bar with its menu open">
     <div class="menubar">
       <span class="tempo" aria-hidden="true"></span>
-      <span class="pill" tabindex="0" aria-describedby="pill-tip"><img src="assets/menubar.png" width="70" height="20" alt="Menu bar item: five bars and 52ms"><span class="tip" id="pill-tip" role="tooltip">Latest Ping Time: 52ms
+      <span class="pill" tabindex="0" aria-describedby="pill-tip"><img src="assets/menubar.png" width="59" height="20" alt="Menu bar item: five bars and 13ms"><span class="tip" id="pill-tip" role="tooltip">Latest Ping Time: 13ms
 Recent Packet Loss: 0%</span></span>
     </div>
     <div class="popover">
-      <img src="assets/popover.webp" width="682" height="770" alt="The Fivebars panel: five green bars, Excellent, host 1.1.1.1, 89 ms and 0% loss, then five minutes of ping times, mostly green with a few orange slow pings and one red lost ping, and statistics for this session and all time" fetchpriority="high">
+      <img src="assets/popover.webp" width="640" height="926" alt="The Fivebars menu: five green bars, Excellent, host 1.1.1.1, the latest ping time and packet loss, five minutes of ping times as green bars with a few orange slow ones, statistics for this session and all time, then Reset Session Stats, Check for Updates, Settings, About and Quit" fetchpriority="high">
     </div>
-    <figcaption>Real captures from the app. Click the bars to open this panel; hover them for a&nbsp;quick readout.</figcaption>
+    <figcaption>Real captures from the app. Click the bars to open this menu; hover them for a&nbsp;quick readout.</figcaption>
   </figure>
 </section>
 
@@ -125,7 +117,7 @@ Recent Packet Loss: 0%</span></span>
 <section class="ladder-section wrap" id="bars">
   <div class="ladder-intro">
     <h2>Read it like your phone.</h2>
-    <p>More bars, better connection. <span data-product>Fivebars</span> scores each ping from the last 30 seconds, counts the newest ones most, and turns the result into bars. One lost ping costs you a&nbsp;bar for a&nbsp;few seconds; a&nbsp;dead line shows a&nbsp;warning triangle.</p>
+    <p>More bars, better connection. Fivebars scores each ping from the last 30 seconds, counts the newest ones most, and turns the result into bars. One lost ping costs you a&nbsp;bar for a&nbsp;few seconds; a&nbsp;dead line shows a&nbsp;warning triangle.</p>
   </div>
   <ol class="ladder" aria-label="What each reading means">
     <li data-bars="5"><span class="glyph" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><strong>Excellent</strong><span>Fast replies, nothing missing.</span></li>
@@ -133,19 +125,19 @@ Recent Packet Loss: 0%</span></span>
     <li data-bars="3"><span class="glyph" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><strong>Fair</strong><span>Often slow, or dropping pings.</span></li>
     <li data-bars="2"><span class="glyph" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><strong>Poor</strong><span>Mostly slow, or losing pings regularly.</span></li>
     <li data-bars="1"><span class="glyph" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><strong>Very poor</strong><span>Barely getting through.</span></li>
-    <li data-bars="0" class="down"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 20 18"><path d="M10 1.6 18.6 16.4H1.4z"/><path d="M10 6.6v4.6M10 13.4v.2" class="stroke"/></svg></span><strong>Failed</strong><span>No reply for 8 seconds. It keeps retrying, and the panel says why.</span></li>
+    <li data-bars="0" class="down"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 20 18"><path d="M10 1.6 18.6 16.4H1.4z"/><path d="M10 6.6v4.6M10 13.4v.2" class="stroke"/></svg></span><strong>Failed</strong><span>No reply for 8 seconds. It keeps retrying, and the menu says why.</span></li>
   </ol>
 </section>
 
 <section class="seq-section wrap" id="sequencer">
   <div class="seq-intro">
     <h2>Thirty pings.<br>One groove.</h2>
-    <p>Here are the last 30 pings as a&nbsp;drum machine, oldest first. Click a&nbsp;key to make that ping fast, slow, crawling or lost, and the screen shows the bars <span data-product>Fivebars</span> would draw. Drag the slow ping slider to see how much your threshold forgives. Then press play and listen to your connection.</p>
+    <p>Here are the last 30 pings as a&nbsp;drum machine, oldest first. Click a&nbsp;key to make that ping fast, slow, crawling or lost, and the screen shows the bars Fivebars would draw. Drag the slow ping slider to see how much your threshold forgives. Then press play and listen to your connection.</p>
   </div>
 
   <div class="machine" aria-labelledby="machine-title">
     <div class="machine-top">
-      <p class="machine-title" id="machine-title"><span data-product>Fivebars</span> <span class="model">PS-30</span></p>
+      <p class="machine-title" id="machine-title">Fivebars <span class="model">PS-30</span></p>
       <div class="lcd" aria-live="polite">
         <svg class="lcd-bars" viewBox="0 0 75 60" aria-hidden="true"><rect x="0" y="45" width="11" height="15" rx="1.5"/><rect x="16" y="35" width="11" height="25" rx="1.5"/><rect x="32" y="25" width="11" height="35" rx="1.5"/><rect x="48" y="12" width="11" height="48" rx="1.5"/><rect x="64" y="0" width="11" height="60" rx="1.5"/></svg>
         <div class="lcd-text">
@@ -205,7 +197,7 @@ Recent Packet Loss: 0%</span></span>
     <h2>No dashboard to read.</h2>
     <div class="contrast-text">
       <p>Plenty of network monitors give you graph windows with five time ranges, a&nbsp;list of targets and a&nbsp;jitter chart. They are good at proving an outage after the fact.</p>
-      <p><span data-product>Fivebars</span> answers one question while you work: is my connection good right now? You can read the bars from across the room. The numbers are one click away when you want them.</p>
+      <p>Fivebars answers one question while you work: is my connection good right now? You can read the bars from across the room. The numbers are one click away when you want them.</p>
     </div>
   </div>
 </section>
@@ -214,31 +206,31 @@ Recent Packet Loss: 0%</span></span>
   <h2>Inside</h2>
   <div class="inside-grid">
     <figure class="shot">
-      <img src="assets/popover.webp" width="682" height="770" loading="lazy" alt="The panel: quality word, host, latest ping, a five-minute ping chart with the slow ping threshold marked, and session and all-time statistics with a Reset menu">
+      <img src="assets/popover.webp" width="640" height="926" loading="lazy" alt="The menu: quality word, host, latest ping, a five-minute ping chart with the slow ping threshold marked, session and all-time statistics, and rows for Reset Session Stats, Check for Updates, Settings, About and Quit">
       <figcaption>
-        <h3>The panel</h3>
-        <p>Click the bars for the details: the quality word, the host and its address, the last five minutes of ping times with your slow ping threshold dashed in and lost pings in red, and statistics for this session and all time.</p>
+        <h3>The menu</h3>
+        <p>Click the bars, left or&nbsp;right, for the details: the quality word, the host and its address, the last five minutes of ping times with your slow ping threshold dashed in and lost pings in&nbsp;red, and statistics for this session and all time.</p>
       </figcaption>
     </figure>
     <figure class="shot">
-      <img src="assets/settings.webp" width="880" height="970" loading="lazy" alt="The Fivebars Settings window: host to ping set to 1.1.1.1, slow ping threshold slider at 100 ms, display set to Icon and Text, switches for packet loss text, connection alerts and launch at login, and Restore Default Settings">
+      <img src="assets/settings.webp" width="880" height="1534" loading="lazy" alt="The Fivebars Settings window: host to ping set to 1.1.1.1, ping every 1 second with a stepper, slow ping threshold slider at 100 ms, display set to Icon and Text, packet loss text set to When There&rsquo;s Loss, switches for connection alerts and launch at login, and the update settings">
       <figcaption>
         <h3>Settings</h3>
-        <p>Pick the host to&nbsp;ping and how slow counts as&nbsp;slow (50&nbsp;to 2000&nbsp;ms). Show bars, ping time or&nbsp;both, add packet loss, and turn on&nbsp;connection alerts and launch at&nbsp;login. Right-click the bars to&nbsp;get here.</p>
+        <p>Pick the host to&nbsp;ping, how often (every 1&nbsp;to&nbsp;60&nbsp;seconds) and how slow counts as&nbsp;slow (50&nbsp;to 2000&nbsp;ms). Show bars, ping time or&nbsp;both, packet loss always or&nbsp;only while pings are lost, and turn on&nbsp;connection alerts and launch at&nbsp;login. Choose Settings in&nbsp;the menu to&nbsp;get here.</p>
       </figcaption>
     </figure>
     <figure class="shot shot-down">
-      <span class="failed-pill"><img src="assets/menubar-failed.png" width="67" height="20" loading="lazy" alt="Menu bar item: a warning triangle and Failed"></span>
-      <img src="assets/popover-down.webp" width="682" height="820" loading="lazy" alt="The panel when the connection is down: grey bars, Connection down, Can&rsquo;t find host, a Change Host button and a red Down where the ping time usually is">
+      <span class="failed-pill"><img src="assets/menubar-failed.png" width="60" height="20" loading="lazy" alt="Menu bar item: a warning triangle and Failed"></span>
+      <img src="assets/popover-down.webp" width="640" height="974" loading="lazy" alt="The menu when the connection is down: grey bars, Connection down, Can&rsquo;t find host nas.invalid, a red Down where the ping time usually is, and a Change Host row above the usual ones">
       <figcaption>
         <h3>When it&rsquo;s down</h3>
-        <p>The bars turn into a&nbsp;warning triangle and <code>Failed</code>. Open the panel to&nbsp;see why, here a&nbsp;host that doesn&rsquo;t exist, and fix it with Change Host.</p>
+        <p>The bars turn into a&nbsp;warning triangle and <code>Failed</code>. Open the menu to&nbsp;see why, here a&nbsp;host that doesn&rsquo;t exist, and fix it with Change Host.</p>
       </figcaption>
     </figure>
   </div>
 
   <ul class="features">
-    <li><h3>Says when it&rsquo;s down, and why</h3><p>A&nbsp;warning triangle and <code>Failed</code> when nothing comes back for 8 seconds. The panel names the cause: no network, host not found, or no replies. Optional alerts when it drops and when it&rsquo;s back.</p></li>
+    <li><h3>Says when it&rsquo;s down, and why</h3><p>A&nbsp;warning triangle and <code>Failed</code> when nothing comes back for 8 seconds. The menu names the cause: no network, host not found, or no replies. Optional alerts when it drops and when it&rsquo;s back.</p></li>
     <li><h3>Recovers on its own</h3><p>Starts again after sleep, Wi-Fi switches, VPNs, cable changes and DNS failures, without waiting for a&nbsp;timeout.</p></li>
     <li><h3>Fits your menu bar</h3><p>Matches light and dark menu bars at any scale. The ping always takes four characters, <code>48ms</code> under 100&nbsp;ms and <code>0.4s</code> from there, so the item holds still as the numbers change. Add packet loss for <code>48ms (4%)</code>.</p></li>
     <li><h3>No admin password</h3><p>Plain pings over IPv4 and IPv6, sent without root or a&nbsp;helper tool. Nothing to install but the app.</p></li>
@@ -248,7 +240,7 @@ Recent Packet Loss: 0%</span></span>
 
 <footer class="foot">
   <div class="wrap foot-row">
-    <span class="wordmark small"><svg class="mark" viewBox="0 0 30 24" aria-hidden="true"><rect x="0" y="18" width="4" height="6" rx="1"/><rect x="6.5" y="14" width="4" height="10" rx="1"/><rect x="13" y="10" width="4" height="14" rx="1"/><rect x="19.5" y="5" width="4" height="19" rx="1"/><rect x="26" y="0" width="4" height="24" rx="1"/></svg><span data-product>Fivebars</span></span>
+    <span class="wordmark small"><svg class="mark" viewBox="0 0 30 24" aria-hidden="true"><rect x="0" y="18" width="4" height="6" rx="1"/><rect x="6.5" y="14" width="4" height="10" rx="1"/><rect x="13" y="10" width="4" height="14" rx="1"/><rect x="19.5" y="5" width="4" height="19" rx="1"/><rect x="26" y="0" width="4" height="24" rx="1"/></svg>Fivebars</span>
     <nav class="foot-links" aria-label="Footer">
       <!-- Extensionless links match the canonicals: Cloudflare Workers (html_handling auto-trailing-slash) redirects support.html to support. -->
       <a href="support">Support</a>

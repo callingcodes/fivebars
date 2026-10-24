@@ -51,7 +51,7 @@ scripts/release.sh 0.9.0 --adhoc --download-base http://127.0.0.1:8765/0.9.0
 scripts/release.sh 0.9.1 --adhoc --download-base http://127.0.0.1:8765/0.9.1
 (cd build/release && python3 -m http.server 8765 --bind 127.0.0.1) &
 defaults write com.callingcodes.fivebars SUFeedURL http://127.0.0.1:8765/appcast.xml
-open build/release/0.9.0/Fivebars.app      # then Check for Updates… (right-click menu)
+open build/release/0.9.0/Fivebars.app      # then Check for Updates… (in the menu)
 defaults delete com.callingcodes.fivebars SUFeedURL   # afterwards
 ```
 

@@ -1,19 +1,6 @@
-// Product name token, theme toggle, and the 30-step ping sequencer.
+// Theme toggle and the 30-step ping sequencer.
 (function () {
   var root = document.documentElement;
-
-  // Product name: one token on <html data-product-name>. See the comment at the top of index.html.
-  var NAME = root.getAttribute("data-product-name") || "";
-  if (NAME) {
-    var titleEl = document.querySelector("title[data-template]");
-    document.title = titleEl ? titleEl.getAttribute("data-template").replace("{name}", NAME) : NAME;
-    document.querySelectorAll("[data-product]").forEach(function (el) { el.textContent = NAME; });
-    document.querySelectorAll("[data-product-aria]").forEach(function (el) {
-      el.setAttribute("aria-label", el.getAttribute("data-product-aria").replace("{name}", NAME));
-    });
-    var meta = document.querySelector('meta[name="description"][data-template]');
-    if (meta) meta.setAttribute("content", meta.getAttribute("data-template").replace("{name}", NAME));
-  }
 
   // Theme toggle, remembered per viewer.
   var toggle = document.querySelector(".theme");
@@ -440,7 +427,6 @@
 // Small touches: the app's own words when the visitor's connection drops or comes back.
 (function () {
   // Offline and back: the header mark drops to one red bar and a toast speaks like the app does.
-  var name = document.documentElement.getAttribute("data-product-name") || "Fivebars";
   var header = document.querySelector(".top");
   var pillImg = document.querySelector(".pill img");
   var tip = document.getElementById("pill-tip");
@@ -463,11 +449,11 @@
       var down = state === "down";
       pillImg.src = down ? "assets/menubar-failed.png" : "assets/menubar.png";
       pillImg.width = down ? 67 : 70;
-      pillImg.alt = down ? "Menu bar item: a warning triangle and Failed" : "Menu bar item: five bars and 52ms";
+      pillImg.alt = down ? "Menu bar item: a warning triangle and Failed" : "Menu bar item: five bars and 13ms";
     }
     if (tip) tip.textContent = state === "down" ? "No replies for 8 s" : tipText;
     if (state === "up") hideTimer = setTimeout(function () { toast.hidden = true; }, 4000);
   }
-  window.addEventListener("offline", function () { say("down", "Failed. Your browser just lost its connection. That triangle is what " + name + " shows in your menu bar when the line goes quiet."); });
+  window.addEventListener("offline", function () { say("down", "Failed. Your browser just lost its connection. That triangle is what Fivebars shows in your menu bar when the line goes quiet."); });
   window.addEventListener("online", function () { say("up", "Connection restored. You\u2019re back online."); });
 })();

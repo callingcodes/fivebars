@@ -119,16 +119,15 @@ h1 { font: 800 clamp(3.4rem, 8.6vw, 6rem)/0.92 var(--display); text-transform: u
 .specs li { display: inline-flex; align-items: center; gap: 8px; }
 .specs li::before { content: ""; width: 6px; height: 6px; border-radius: 1px; background: var(--signal); }
 
-/* Stage: menu bar strip with the real popover hanging from it */
-/* One anchor: the stage centre. The pill sits in the middle grid column and the popover is centred, so the arrow (left: 50%) lands under the pill's middle at any width and for any item width (52ms or Failed). */
-.stage { margin: 0; position: relative; display: flex; flex-direction: column; align-items: center; }
-.menubar { width: 100%; height: 34px; border-radius: 10px 10px 0 0; background: linear-gradient(#5f7394, #5d6e8d); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
+/* Stage: menu bar strip with the real menu hanging from it */
+/* The menu column is centred and as wide as the menu. Like the real one, the menu drops just below the bar with no arrow, its left edge a hair left of the item (the pill sits 4px in). */
+.stage { --menu-w: min(100%, 400px); margin: 0; position: relative; display: flex; flex-direction: column; align-items: center; }
+.menubar { width: 100%; height: 34px; border-radius: 10px 10px 0 0; background: linear-gradient(#5f7394, #5d6e8d); display: grid; grid-template-columns: minmax(0, 1fr) var(--menu-w) minmax(0, 1fr); align-items: center; }
 .tempo { justify-self: end; width: 7px; height: 7px; border-radius: 50%; background: #ff6b4f; margin-right: 14px; opacity: 0.9; }
-.pill { display: inline-flex; align-items: center; height: 26px; padding: 0 6px; border-radius: 8px; background: rgba(255, 255, 255, 0.16); }
+.pill { justify-self: start; margin-left: 4px; display: inline-flex; align-items: center; height: 26px; padding: 0 6px; border-radius: 8px; background: rgba(255, 255, 255, 0.16); }
 .pill img { width: auto; height: 20px; }
-.popover { position: relative; width: min(100%, 400px); margin-top: 12px; border-radius: 14px; box-shadow: var(--shadow); background: #646464; }
-.popover::before { content: ""; position: absolute; top: -7px; left: 50%; margin-left: -7px; width: 14px; height: 14px; background: #646464; transform: rotate(45deg); border-radius: 2px; }
-.popover img { position: relative; border-radius: 14px; }
+.popover { width: var(--menu-w); margin-top: 5px; border-radius: 17px; box-shadow: var(--shadow); }
+.popover img { border-radius: 17px; }
 .stage figcaption { align-self: stretch; margin-top: 18px; font: 400 0.8rem/1.4 var(--mono); color: var(--ink-2); text-align: right; }
 
 /* Report strip */
@@ -281,10 +280,9 @@ input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba
 /* Each figure spans three shared rows (subgrid): pill row, window, caption. The pill row is sized by the Failed pill, so all three windows start on one line and all captions on the next. */
 .inside-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: auto; column-gap: clamp(28px, 4vw, 64px); row-gap: 0; }
 .shot { margin: 0; display: grid; grid-row: span 3; grid-template-rows: subgrid; row-gap: 0; }
-.shot > img { grid-row: 2; align-self: start; justify-self: center; border-radius: 14px; box-shadow: var(--shadow); background: transparent; max-height: 620px; width: auto; margin: 0 0 24px; }
+.shot > img { grid-row: 2; align-self: start; justify-self: center; border-radius: 18px; box-shadow: var(--shadow); background: transparent; max-height: 620px; width: auto; margin: 0 0 24px; }
 .shot > figcaption { grid-row: 3; }
 .failed-pill { grid-row: 1; align-self: end; justify-self: center; position: relative; display: flex; justify-content: center; align-items: center; width: max-content; height: 30px; margin: 0 0 14px; padding: 0 10px; border-radius: 8px; background: linear-gradient(#5f7394, #5d6e8d); box-shadow: var(--shadow); }
-.failed-pill::after { content: ""; position: absolute; bottom: -6px; left: 50%; margin-left: -6px; width: 12px; height: 12px; background: #5d6e8d; transform: rotate(45deg); border-radius: 2px; }
 .failed-pill img { position: relative; z-index: 1; width: auto; height: 20px; margin: 0; box-shadow: none; border-radius: 0; background: none; }
 .shot figcaption p { color: var(--ink-2); margin: 6px 0 0; max-width: 48ch; }
 .aside { font: 400 0.8rem/1.4 var(--mono); color: var(--ink-2); margin: 28px 0 0; }
@@ -341,7 +339,7 @@ input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba
 @media (max-width: 600px) {
   .app-icon { width: 80px; margin: 0 0 14px -8px; }
   .nav a { display: none; }
-  .popover { width: min(100%, 330px); }
+  .stage { --menu-w: min(100%, 330px); }
   .report-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .report-row div:nth-child(n) { border-left: 1px solid var(--rule); padding-left: 16px; border-top: 1px solid var(--rule); }
   .report-row div:nth-child(odd) { border-left: 0; padding-left: 0; }
