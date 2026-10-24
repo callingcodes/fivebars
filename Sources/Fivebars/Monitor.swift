@@ -3,7 +3,7 @@ import FivebarsCore
 import Network
 import Observation
 
-/// Pings the configured host every second and turns the replies into a connection quality.
+/// Pings the configured host every `prefs.pingInterval` (1 s by default) and turns the replies into a connection quality.
 @MainActor
 @Observable
 final class Monitor {
@@ -16,7 +16,6 @@ final class Monitor {
         var lost = false
     }
 
-    static let pingInterval: TimeInterval = 1
     /// The chart shows 5 minutes; nothing else reads older samples.
     static let historyLength: TimeInterval = 5 * 60
     static let saveEveryTicks = 20
@@ -58,6 +57,8 @@ final class Monitor {
     /// One identifier per process, kept across pinger restarts so in-flight replies still match.
     @ObservationIgnored private let identifier = UInt16.random(in: .min ... .max)
     /// Random start so a relaunch never reuses the ids of the previous run's in-flight pings.
+    /// When the last ping went out, so an interval change keeps the rhythm instead of pinging at once.
+    @ObservationIgnored private var lastPingSent: Date?
     @ObservationIgnored private var nextPingId = UInt64.random(in: 0...UInt64(UInt32.max))
     @ObservationIgnored private var tickCount = 0
     @ObservationIgnored private var asleep = false
@@ -71,7 +72,12 @@ final class Monitor {
     }
 
     private static func watchdogConfig(_ prefs: Preferences) -> ConnectionWatchdog.Config {
-        .original(timeout: prefs.pingTimeout, pingInterval: pingInterval)
+        .original(timeout: prefs.pingTimeout, pingInterval: prefs.pingInterval)
+    }
+
+    /// Seconds without a reply before the connection is declared down.
+    var replyTimeout: TimeInterval {
+        Self.watchdogConfig(prefs).replyTimeout
     }
 
     /// Why the connection is down; nil unless `status` is `.down`.
@@ -83,12 +89,13 @@ final class Monitor {
         score.map { QualityScorer.bars(for: $0) } ?? 0
     }
 
-    var menuTitle: String {
+    /// `showsLoss` comes from the status item, which owns the packet loss mode's hysteresis.
+    func menuTitle(showsLoss: Bool) -> String {
         if status == .down {
             return MenuBarTitle.failed
         }
         guard let latestPingMs else { return MenuBarTitle.waiting }
-        let loss = prefs.showPacketLossText && lossIsKnown ? lossPercent : nil
+        let loss = showsLoss && lossIsKnown ? lossPercent : nil
         return MenuBarTitle.title(pingMs: latestPingMs, lossPercent: loss)
     }
 
@@ -134,7 +141,36 @@ final class Monitor {
         prefs.restoreDefaults()
         if prefs.hostname != previousHost {
             hostChanged()
+        } else {
+            pingIntervalChanged()
         }
+    }
+
+    /// Applies at once: the watchdog takes the new timings and the one ping timer is rescheduled.
+    func setPingInterval(_ interval: TimeInterval) {
+        let interval = Preferences.validPingInterval(interval)
+        guard interval != prefs.pingInterval else { return }
+        prefs.pingInterval = interval
+        pingIntervalChanged()
+    }
+
+    private func pingIntervalChanged() {
+        watchdog.config = Self.watchdogConfig(prefs)
+        guard pingTimer != nil else { return }
+        schedulePingTimer()
+    }
+
+    /// Replaces the ping timer. The next ping is due one interval after the last one went out, never
+    /// earlier than now: going faster sends at most one catch-up ping, going slower waits it out.
+    private func schedulePingTimer() {
+        pingTimer?.invalidate()
+        let interval = prefs.pingInterval
+        let due = lastPingSent.map { max($0.addingTimeInterval(interval), Date()) } ?? Date().addingTimeInterval(interval)
+        let timer = Timer(fire: due, interval: interval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.sendPing() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        pingTimer = timer
     }
 
     private func hostChanged() {
@@ -215,12 +251,8 @@ final class Monitor {
             resolvedAddress = address.display
             startError = nil
             watchdog.pingingStarted(at: MonotonicClock.now())
-            let timer = Timer(timeInterval: Self.pingInterval, repeats: true) { [weak self] _ in
-                MainActor.assumeIsolated { self?.sendPing() }
-            }
-            RunLoop.main.add(timer, forMode: .common)
-            pingTimer = timer
             sendPing()
+            schedulePingTimer()
         case .switched(let address):
             resolvedAddress = address.display
         case .failed(let error):
@@ -236,6 +268,7 @@ final class Monitor {
         let id = nextPingId
         nextPingId += 1
         let now = Date()
+        lastPingSent = now
         pinger.send(id: id)
         pending.append(PendingPing(id: id, sent: MonotonicClock.now()))
         samples.append(Sample(id: id, date: now))

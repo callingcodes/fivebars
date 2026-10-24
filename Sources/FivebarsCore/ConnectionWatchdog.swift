@@ -60,17 +60,21 @@ public struct ConnectionWatchdog: Sendable {
             self.resolutionTimeout = resolutionTimeout
         }
 
-        /// The original declared failure after timeout + 4 ping intervals without a reply.
+        /// The original declared failure after timeout + 4 ping intervals without a reply (8 s at
+        /// 1 s). Slower intervals miss 4 pings at most, 2 at least, and aim for no more than 60 s of
+        /// misses: timeout + max(2 × interval, min(4 × interval, 60)).
         public static func original(timeout: TimeInterval, pingInterval: TimeInterval) -> Config {
-            let replyTimeout = timeout + 4 * pingInterval
+            let missed = max(2 * pingInterval, min(4 * pingInterval, 60))
+            let replyTimeout = timeout + missed
             return Config(
                 replyTimeout: replyTimeout,
                 maxSilence: replyTimeout + 12,
                 grace: 10,
                 retryDelay: 2,
                 minRestartInterval: 2,
-                // A recovery is noticed within ~15 s even when each retry needs DNS.
-                maxRestartInterval: 15,
+                // A recovery is noticed within ~15 s even when each retry needs DNS. Each restart
+                // sends a ping, so retries never come faster than the chosen interval.
+                maxRestartInterval: max(15, pingInterval),
                 resolutionTimeout: 10
             )
         }

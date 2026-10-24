@@ -40,14 +40,30 @@ public struct ScoringConfig: Equatable, Sendable {
         self.averageOver = averageOver
     }
 
-    /// The original app derived the high threshold as low + 900 ms and averaged over 30 s.
-    public static func original(slowPingThresholdMs: Double, timeout: TimeInterval) -> ScoringConfig {
+    /// The original app derived the high threshold as low + 900 ms and averaged over 30 s, pinging
+    /// once a second. Slower intervals keep at least `minimumPingsInWindow` pings in the window.
+    public static func original(
+        slowPingThresholdMs: Double,
+        timeout: TimeInterval,
+        pingInterval: TimeInterval = 1
+    ) -> ScoringConfig {
         ScoringConfig(
             lowThreshold: slowPingThresholdMs / 1000,
             highThreshold: (slowPingThresholdMs + 900) / 1000,
             timeout: timeout,
-            averageOver: 30
+            averageOver: averagingWindow(pingInterval: pingInterval)
         )
+    }
+
+    /// The original's 30 s window, the floor for any interval.
+    public static let minimumWindow: TimeInterval = 30
+    /// At slow intervals the window stretches so it still holds this many pings.
+    public static let minimumPingsInWindow = 10.0
+
+    /// max(30 s, 10 pings × interval): 30 s up to a 3 s interval, then 10 pings (50 s at 5 s,
+    /// 10 min at 60 s). The 1.2× recency weighting stays per ping, so the newest pings dominate alike.
+    public static func averagingWindow(pingInterval: TimeInterval) -> TimeInterval {
+        max(minimumWindow, minimumPingsInWindow * pingInterval)
     }
 }
 

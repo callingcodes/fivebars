@@ -1,3 +1,4 @@
+import FivebarsCore
 import ServiceManagement
 import SwiftUI
 
@@ -7,6 +8,8 @@ struct SettingsView: View {
     let updater: Updater
 
     @State private var hostDraft = ""
+    @State private var intervalDraft = ""
+    @FocusState private var intervalFocused: Bool
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var launchError: String?
     @State private var checkAutomatically = false
@@ -38,6 +41,35 @@ struct SettingsView: View {
             }
 
             Section {
+                LabeledContent("Ping Every") {
+                    HStack(spacing: 4) {
+                        TextField("Ping Every", text: $intervalDraft)
+                            .labelsHidden()
+                            .multilineTextAlignment(.trailing)
+                            .monospacedDigit()
+                            .frame(width: 44)
+                            .focused($intervalFocused)
+                            .onSubmit(commitInterval)
+                            .onChange(of: intervalFocused) { _, focused in
+                                if !focused { commitInterval() }
+                            }
+                        Stepper("Ping Every", value: pingInterval, in: intervalRange, step: 1)
+                            .labelsHidden()
+                        Text("s")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .onChange(of: prefs.pingInterval) { _, _ in
+                    intervalDraft = Self.intervalText(prefs.pingInterval)
+                }
+            } footer: {
+                footerText(
+                    "1 to 60 seconds. Slower intervals send less traffic and use less battery, "
+                        + "but the bars react more slowly."
+                )
+            }
+
+            Section {
                 LabeledContent("Slow Ping Threshold") {
                     HStack {
                         Slider(value: logThreshold, in: log(Preferences.slowPingRange.lowerBound)...log(
@@ -61,7 +93,11 @@ struct SettingsView: View {
                         Text(display.title).tag(display)
                     }
                 }
-                Toggle("Packet Loss Text", isOn: $prefs.showPacketLossText)
+                Picker("Packet Loss Text", selection: $prefs.lossTextMode) {
+                    Text("Off").tag(MenuBarTitle.LossMode.off)
+                    Text("When There's Loss").tag(MenuBarTitle.LossMode.whenLossy)
+                    Text("Always").tag(MenuBarTitle.LossMode.always)
+                }
                 Toggle("Connection Up/Down Alerts", isOn: $prefs.showNotifications)
                     .onChange(of: prefs.showNotifications) { _, enabled in
                         if enabled { Notifier.shared.requestAuthorization() }
@@ -124,6 +160,7 @@ struct SettingsView: View {
         .fixedSize(horizontal: false, vertical: true)
         .onAppear {
             hostDraft = prefs.hostname
+            intervalDraft = Self.intervalText(prefs.pingInterval)
             launchAtLogin = LaunchAtLogin.isEnabled
             checkAutomatically = updater.automaticallyChecksForUpdates
             installAutomatically = updater.automaticallyDownloadsUpdates
@@ -145,6 +182,29 @@ struct SettingsView: View {
             return monitor.downReasonText
         }
         return "Resolving…"
+    }
+
+    private var pingInterval: Binding<TimeInterval> {
+        Binding(
+            get: { prefs.pingInterval },
+            set: { monitor.setPingInterval($0) }
+        )
+    }
+
+    private var intervalRange: ClosedRange<TimeInterval> {
+        TimeInterval(PingIntervalSetting.range.lowerBound)...TimeInterval(PingIntervalSetting.range.upperBound)
+    }
+
+    private static func intervalText(_ seconds: TimeInterval) -> String {
+        String(Int(seconds))
+    }
+
+    /// Out-of-range values clamp to 1...60; text that is not a number reverts to the current value.
+    private func commitInterval() {
+        if let seconds = PingIntervalSetting.parse(intervalDraft) {
+            monitor.setPingInterval(TimeInterval(seconds))
+        }
+        intervalDraft = Self.intervalText(prefs.pingInterval)
     }
 
     /// The threshold slider runs on a log scale so the useful 50–300 ms band gets half the track.
